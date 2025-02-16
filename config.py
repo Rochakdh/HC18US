@@ -6,3 +6,5 @@ LEARNING_RATE = 0.001
 TRAIN_DATA_PATH = "./src/train_set/"
 TEST_DATA_PATH = "./src/test_set/"
 SAVE_MODEL_PATH = './model/model.pth'
+ANNOTATION_FILE = "./src/training_set_pixel_size_and_HC.csv"
+IMG_DIR = "./src/training_set"

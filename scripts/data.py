@@ -30,14 +30,14 @@ class CustomUltrasoundDataset(Dataset):
         return image, mask
 
 
-if __name__ == "__main__":
-    dataset = CustomUltrasoundDataset(
-        annnootation_file="./src/training_set_pixel_size_and_HC.csv",
-        image_dir="./src/training_set"
-    )
-    print(dataset[0])
+# if __name__ == "__main__":
+#     dataset = CustomUltrasoundDataset(
+#         annnootation_file="./src/training_set_pixel_size_and_HC.csv",
+#         image_dir="./src/training_set"
+#     )
+#     print(dataset[0])
 
-annonation_file = "./src/training_set_pixel_size_and_HC.csv"
-img_dir = "./src/training_set"
-c = CustomUltrasoundDataset(annonation_file, img_dir)
-print(c[3])
+# annonation_file = "./src/training_set_pixel_size_and_HC.csv"
+# img_dir = "./src/training_set"
+# c = CustomUltrasoundDataset(annonation_file, img_dir)
+# print(c[3])

@@ -13,6 +13,7 @@ import os
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 import matplotlib.pyplot as plt
+import time
 
 class HC18US:
     def __init__(self, dataset, batch_size=BATCH_SIZE, num_epochs=NUM_EPOCHS, lr=LEARNING_RATE, num_folds=FOLD, 
@@ -66,36 +67,72 @@ class HC18US:
         return start_epoch
 
     def train_on_epoch(self, model, train_data_loader, optimizer, epoch, fold):
-        """Trains the model for one epoch and logs loss."""
+        """Trains for one epoch with tqdm tracking loss and batch time."""
         model.train()
         running_loss = 0.
+        start_time = time.time()  # Track epoch start time
+
         progress_bar = tqdm(train_data_loader, desc=f"Training Fold {fold+1} Epoch {epoch+1}", leave=False)
-        for image, mask in progress_bar:
+        
+        for batch_idx, (image, mask) in enumerate(progress_bar):
+            batch_start = time.time()  # Track batch time
+
             image, mask = image.to(self.device), mask.to(self.device)
             optimizer.zero_grad()
             outputs = model(image)
             loss = dice_loss(outputs, mask)
             loss.backward()
             optimizer.step()
-            running_loss += loss.item()
+
+            batch_loss = loss.item()
+            running_loss += batch_loss
+            batch_time = time.time() - batch_start  # Compute batch processing time
+            
+            # Update tqdm bar with loss and batch time
+            progress_bar.set_postfix({
+                "Batch Loss": f"{batch_loss:.4f}",
+                "Avg Loss": f"{running_loss / (batch_idx + 1):.4f}",
+                "Batch Time": f"{batch_time:.3f}s"
+            })
 
         epoch_loss = running_loss / len(train_data_loader)
+        epoch_time = time.time() - start_time  # Compute epoch processing time
+
+        tqdm.write(f"Epoch {epoch+1} Completed: Train Loss: {epoch_loss:.4f}, Time: {epoch_time:.2f}s")
+        
         self.writer.add_scalar(f'Fold_{fold+1}/Train_Loss', epoch_loss, epoch)
         return epoch_loss
 
     def val_on_epoch(self, model, val_data_loader, epoch, fold):
-        """Validates the model for one epoch and logs loss."""
+        """Validates for one epoch with tqdm tracking loss and batch time."""
         model.eval()
         running_loss = 0.0
+        start_time = time.time()
+
         progress_bar = tqdm(val_data_loader, desc=f"Validating Fold {fold+1} Epoch {epoch+1}", leave=False)
+
         with torch.no_grad():
-            for image, mask in progress_bar:
+            for batch_idx, (image, mask) in enumerate(progress_bar):
+                batch_start = time.time()
+
                 image, mask = image.to(self.device), mask.to(self.device)
                 outputs = model(image)
                 loss = dice_loss(outputs, mask)
-                running_loss += loss.item()
 
+                batch_loss = loss.item()
+                running_loss += batch_loss
+                batch_time = time.time() - batch_start
+
+                progress_bar.set_postfix({
+                    "Batch Loss": f"{batch_loss:.4f}",
+                    "Avg Loss": f"{running_loss / (batch_idx + 1):.4f}",
+                    "Batch Time": f"{batch_time:.3f}s"
+                })
         epoch_loss = running_loss / len(val_data_loader)
+        epoch_time = time.time() - start_time
+
+        tqdm.write(f"Epoch {epoch+1} Completed: Val Loss: {epoch_loss:.4f}, Time: {epoch_time:.2f}s")
+
         self.writer.add_scalar(f'Fold_{fold+1}/Val_Loss', epoch_loss, epoch)
         return epoch_loss
 

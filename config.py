@@ -11,3 +11,5 @@ TEST_DATA_PATH = "./src/test_set/"
 SAVE_MODEL_PATH = './model/model.pth'
 ANNOTATION_FILE = "./src/training_set_pixel_size_and_HC.csv"
 IMG_DIR = "./src/training_set"
+CHECKPOINT_DIR = './models/checkpoint/'
+LOG_DIR = './logs/'

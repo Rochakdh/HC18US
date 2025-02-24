@@ -81,10 +81,10 @@ class UNet(nn.Module):
 
         return x
 
-# Instantiate the model
-model = UNet(in_channels=1, out_channels=1)
+# # Instantiate the model
+# model = UNet(in_channels=1, out_channels=1)
 
-# Test with input of shape (B, C, H, W) = (2, 1, 540, 800)
-x = torch.randn(2, 1, 540, 800)
-output = model(x)
-print("Output shape:", output.shape)  # Should be (2, 1, 540, 800)
+# # Test with input of shape (B, C, H, W) = (2, 1, 540, 800)
+# x = torch.randn(2, 1, 540, 800)
+# output = model(x)
+# print("Output shape:", output.shape)  # Should be (2, 1, 540, 800)

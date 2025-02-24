@@ -1,0 +1,4 @@
+When loading, images are typically converted to a single-channel format.
+Ground truth (GT) images are provided without a channel dimension.
+In PyTorch, image inputs must be in C × H × W format.
+Loss functions expect labels in H × W format since the channel dimension is not needed.

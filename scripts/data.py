@@ -24,7 +24,7 @@ class CustomUltrasoundDataset(Dataset):
         image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE) 
         mask = cv2.imread(segmentation_mask_path, cv2.IMREAD_GRAYSCALE) 
         
-        image = torch.tensor(image, dtype=torch.float32).unsqueeze(0) / 255.0 
+        image = torch.tensor(image, dtype=torch.float32).unsqueeze(0) / 255.0  #added channel for the images
         mask = torch.tensor(mask, dtype=torch.long)
 
         return image, mask

@@ -14,6 +14,7 @@ from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
 import matplotlib.pyplot as plt
 import time
+import numpy as np 
 
 class HC18US:
     def __init__(self, dataset, batch_size=BATCH_SIZE, num_epochs=NUM_EPOCHS, lr=LEARNING_RATE, num_folds=FOLD, 
@@ -48,23 +49,30 @@ class HC18US:
         tqdm.write(f"Checkpoint saved: {checkpoint_path}")
 
     def load_checkpoint(self, model, optimizer, fold):
-        """Loads the latest checkpoint for a fold."""
+        """Loads the latest checkpoint for a fold and resumes training from the last saved epoch."""
         checkpoint_files = sorted(
             [f for f in os.listdir(self.checkpoint_dir) if f.startswith(f"fold_{fold+1}_epoch_")],
-            key=lambda x: int(x.split("_epoch_")[1].split(".pt")[0])
+            key=lambda x: int(x.split("_epoch_")[1].split(".pt")[0])  # Sort by epoch number
         )
+        
         if checkpoint_files:
-            latest_checkpoint = os.path.join(self.checkpoint_dir, checkpoint_files[-1])
+            latest_checkpoint = os.path.join(self.checkpoint_dir, checkpoint_files[-1])  # Get last checkpoint
             checkpoint = torch.load(latest_checkpoint, map_location=self.device)
+            
             model.load_state_dict(checkpoint['model_state_dict'])
             optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-            start_epoch = checkpoint['epoch']
+            start_epoch = checkpoint['epoch']  # Resume from next epoch
+            train_losses = checkpoint.get('train_losses', [])
+            val_losses = checkpoint.get('val_losses', [])
+
             tqdm.write(f"Resuming from {latest_checkpoint} (Epoch {start_epoch})")
         else:
             start_epoch = 0
-            tqdm.write(f"No checkpoint found at {self.checkpoint_dir}")
-        
-        return start_epoch
+            train_losses, val_losses = [], []
+            tqdm.write(f"No checkpoint found at {self.checkpoint_dir}. Starting from scratch.")
+
+        return start_epoch, train_losses, val_losses
+
 
     def train_on_epoch(self, model, train_data_loader, optimizer, epoch, fold):
         """Trains for one epoch with tqdm tracking loss and batch time."""
@@ -111,6 +119,9 @@ class HC18US:
 
         progress_bar = tqdm(val_data_loader, desc=f"Validating Fold {fold+1} Epoch {epoch+1}", leave=False)
 
+        if epoch % 2 == 0:  # Visualize every 2 epochs
+            self.visualize_predictions(model, val_data_loader, epoch)
+
         with torch.no_grad():
             for batch_idx, (image, mask) in enumerate(progress_bar):
                 batch_start = time.time()
@@ -153,9 +164,11 @@ class HC18US:
             model = UNet(in_channels=1, out_channels=1).to(self.device)
             optimizer = optim.Adam(model.parameters(), lr=self.lr)
 
+            start_epoch, train_loss, val_loss = self.load_checkpoint(model, optimizer, fold)
+
             best_val_loss = float("inf")
 
-            for epoch in range(self.num_epochs):
+            for epoch in range(start_epoch,self.num_epochs):
                 train_loss = self.train_on_epoch(model, train_loader, optimizer, epoch, fold)
                 val_loss = self.val_on_epoch(model, val_loader, epoch, fold)
 
@@ -193,6 +206,43 @@ class HC18US:
         plt.legend()
         plt.grid()
         plt.show()
+    
+    def visualize_predictions(self, model, dataloader, epoch):
+        """ Visualizes model predictions on a few samples from the validation set. """
+        model.eval()  # Set model to evaluation mode
+        images, masks = next(iter(dataloader))  # Get a batch of validation images
+        images, masks = images.to(DEVICE), masks.to(DEVICE)
+
+        with torch.no_grad():
+            preds = model(images)  # Get model predictions
+            preds = torch.sigmoid(preds)  # Apply sigmoid if using BCE loss
+            preds = (preds > 0.5).float()  # Convert to binary mask
+
+        # Convert to numpy for visualization
+        images = images.cpu().numpy().squeeze()
+        masks = masks.cpu().numpy().squeeze()
+        preds = preds.cpu().numpy().squeeze()
+
+        # Plot images, ground truth, and predictions
+        fig, axes = plt.subplots(len(images), 3, figsize=(10, 5 * len(images)))
+        if len(images) == 1:
+            axes = [axes]  # Ensure proper indexing if batch size is 1
+
+        for i in range(len(images)):
+            axes[i][0].imshow(images[i], cmap='gray')
+            axes[i][0].set_title("Input Image")
+
+            axes[i][1].imshow(masks[i], cmap='gray')
+            axes[i][1].set_title("Ground Truth Mask")
+
+            axes[i][2].imshow(preds[i], cmap='gray')
+            axes[i][2].set_title(f"Predicted Mask (Epoch {epoch})")
+
+            for ax in axes[i]:
+                ax.axis("off")
+        plt.savefig(f'./predicted_mask/predictions_epoch_{epoch}.png')
+        # plt.tight_layout()
+        # plt.show()
 
 
 # Load Dataset
@@ -202,7 +252,7 @@ dataset = CustomUltrasoundDataset(
 )
 
 # Train Model with 5-Fold Cross Validation
-trainer = HC18US(dataset, batch_size=2, num_epochs=10, lr=0.001, num_folds=5)
+trainer = HC18US(dataset, batch_size=2, num_epochs=100, lr=0.001, num_folds=5)
 trainer.cross_validation()
 
 # Plot Losses after training

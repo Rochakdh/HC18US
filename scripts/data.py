@@ -4,6 +4,12 @@ from torchvision.io import read_image
 import pandas as pd
 import cv2
 import torch
+import numpy as np
+
+def preprocess_mask(mask):
+    # Convert mask from 0-255 to binary 0 and 1
+    binary_mask = (mask > 0).astype(np.uint8)  # Threshold at 0; adjust if needed (e.g., == 255)
+    return binary_mask
 
 class CustomUltrasoundDataset(Dataset):
     def __init__(self, annnootation_file, image_dir,target_size=(540, 800), transform=None):
@@ -17,7 +23,7 @@ class CustomUltrasoundDataset(Dataset):
 
     def __getitem__(self, idx):
         image_path = os.path.join(self.image_dir,self.hc_df.iloc[idx,0])
-        segmentation_mask_path = os.path.join(self.image_dir,f"{self.hc_df.iloc[idx,0].split(".")[0]}_Annotation.{self.hc_df.iloc[idx,0].split(".")[1]}")
+        segmentation_mask_path = os.path.join(self.image_dir,f"{self.hc_df.iloc[idx,0].split('.')[0]}_Annotation.{self.hc_df.iloc[idx,0].split('.')[1]}")
         if not os.path.exists(image_path):
             raise FileNotFoundError(f"Image file not found: {image_path}")
         if not os.path.exists(segmentation_mask_path):
@@ -30,6 +36,7 @@ class CustomUltrasoundDataset(Dataset):
         # Resize images to target size
         image = cv2.resize(image, self.target_size, interpolation=cv2.INTER_LINEAR)
         mask = cv2.resize(mask, self.target_size, interpolation=cv2.INTER_NEAREST)  # Use nearest for masks
+        mask = preprocess_mask(mask)
 
         # Convert to tensors and normalize
         image = torch.tensor(image, dtype=torch.float32).unsqueeze(0) / 255.0  # Normalize image

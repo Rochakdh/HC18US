@@ -27,7 +27,7 @@ def dice_loss(pred, target, smooth=1e-6):
     union = pred.sum(dim=(1,2)) + target.sum(dim=(1,2))
     
     # Compute Dice Coefficient
-    dice = (2. * intersection + smooth) / (union + smooth)
+    dice = (2. * intersection + smooth) / (union + intersection + smooth)
     
     # Return Dice Loss
     return 1 - dice.mean()

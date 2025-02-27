@@ -162,7 +162,7 @@ class HC18US:
             val_loader = DataLoader(val_subset, batch_size=self.batch_size, drop_last=True)
 
             model = UNet(in_channels=1, out_channels=1).to(self.device)
-            optimizer = optim.Adam(model.parameters(), lr=self.lr)
+            optimizer = optim.Adam(model.parameters(), lr=self.lr, weight_decay=1e-5)
 
             start_epoch, train_loss, val_loss = self.load_checkpoint(model, optimizer, fold)
 
@@ -252,7 +252,7 @@ dataset = CustomUltrasoundDataset(
 )
 
 # Train Model with 5-Fold Cross Validation
-trainer = HC18US(dataset, batch_size=2, num_epochs=100, lr=0.001, num_folds=5)
+trainer = HC18US(dataset, batch_size=BATCH_SIZE, num_epochs=NUM_EPOCHS, lr=LEARNING_RATE, num_folds=5)
 trainer.cross_validation()
 
 # Plot Losses after training

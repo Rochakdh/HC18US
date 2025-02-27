@@ -43,7 +43,8 @@ class CustomUltrasoundDataset(Dataset):
         mask = torch.tensor(mask, dtype=torch.long)  # Keep as integer labels
 
         if self.transform:
-            image = self.transform(image)
+            pass
+            # image = self.transform(image)
 
         return image, mask
 

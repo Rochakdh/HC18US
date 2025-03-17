@@ -2,8 +2,8 @@ import torch
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 SEED =  42
-BATCH_SIZE = 2
-NUM_EPOCHS = 200
+BATCH_SIZE = 4
+NUM_EPOCHS = 500
 LEARNING_RATE = 0.001
 FOLD = 5
 TRAIN_DATA_PATH = "./src/train_set/"

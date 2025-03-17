@@ -15,6 +15,8 @@ from torch.utils.tensorboard import SummaryWriter
 import matplotlib.pyplot as plt
 import time
 import numpy as np 
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
 
 class HC18US:
     def __init__(self, dataset, batch_size=BATCH_SIZE, num_epochs=NUM_EPOCHS, lr=LEARNING_RATE, num_folds=FOLD, 
@@ -207,6 +209,7 @@ class HC18US:
         plt.grid()
         plt.show()
     
+
     def visualize_predictions(self, model, dataloader, epoch):
         """ Visualizes model predictions on a few samples from the validation set. """
         model.eval()  # Set model to evaluation mode
@@ -222,6 +225,10 @@ class HC18US:
         images = images.cpu().numpy().squeeze()
         masks = masks.cpu().numpy().squeeze()
         preds = preds.cpu().numpy().squeeze()
+
+        # Ensure the directory exists before saving
+        output_dir = "./predicted_mask"
+        os.makedirs(output_dir, exist_ok=True)
 
         # Plot images, ground truth, and predictions
         fig, axes = plt.subplots(len(images), 3, figsize=(10, 5 * len(images)))
@@ -240,16 +247,38 @@ class HC18US:
 
             for ax in axes[i]:
                 ax.axis("off")
-        plt.savefig(f'./predicted_mask/predictions_epoch_{epoch}.png')
+
+        # Save the figure
+        plt.savefig(os.path.join(output_dir, f'predictions_epoch_{epoch}.png'))
+        plt.close()
+
         # plt.tight_layout()
         # plt.show()
 
+transform = A.Compose([
+    A.HorizontalFlip(p=0.5),
+    A.Rotate(limit=20, p=0.5),
+    A.RandomBrightnessContrast(p=0.2),
+    A.GaussianBlur(p=0.2),
+    A.Normalize(mean=[0.5], std=[0.5]),  # Normalize grayscale image
+    ToTensorV2(),  # Converts to PyTorch tensor
+])
+
 
 # Load Dataset
+# dataset = CustomUltrasoundDataset(
+#     annotation_file="./src/training_set_pixel_size_and_HC.csv",
+#     image_dir="./src/training_set",
+#     transform=transform
+# )
+
 dataset = CustomUltrasoundDataset(
-    annnootation_file="./src/training_set_pixel_size_and_HC.csv",
-    image_dir="./src/training_set"
+    annotation_file="/workspace/HC18US/src/training_set_pixel_size_and_HC.csv",
+    preprocessed_dir="/workspace/HC18US/src/generated_training_set/",
+    transform=None,
+    augment=False
 )
+
 
 # Train Model with 5-Fold Cross Validation
 trainer = HC18US(dataset, batch_size=BATCH_SIZE, num_epochs=NUM_EPOCHS, lr=LEARNING_RATE, num_folds=5)

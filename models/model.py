@@ -1,10 +1,11 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from config import *
 
 class DoubleConv(nn.Module):
     """(Conv2D => BN => ReLU => Dropout) * 2"""
-    def __init__(self, in_channels, out_channels, dropout_prob=0.3):
+    def __init__(self, in_channels, out_channels, dropout_prob=DROPOUT):
         super().__init__()
         self.conv = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
@@ -22,7 +23,7 @@ class DoubleConv(nn.Module):
         return self.conv(x)
 
 class UNet(nn.Module):
-    def __init__(self, in_channels=1, out_channels=1, dropout_prob=0.3):
+    def __init__(self, in_channels=1, out_channels=1, dropout_prob=DROPOUT):
         super(UNet, self).__init__()
 
         # Encoder

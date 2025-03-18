@@ -165,6 +165,7 @@ class HC18US:
 
             model = UNet(in_channels=1, out_channels=1).to(self.device)
             optimizer = optim.Adam(model.parameters(), lr=self.lr, weight_decay=1e-5)
+            scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3, verbose=True)
 
             start_epoch, train_loss, val_loss = self.load_checkpoint(model, optimizer, fold)
 
@@ -173,8 +174,10 @@ class HC18US:
             for epoch in range(start_epoch,self.num_epochs):
                 train_loss = self.train_on_epoch(model, train_loader, optimizer, epoch, fold)
                 val_loss = self.val_on_epoch(model, val_loader, epoch, fold)
+                scheduler.step(val_loss)
+                current_lr = optimizer.param_groups[0]['lr']
 
-                print(f"Epoch {epoch+1}/{self.num_epochs} - Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}")
+                print(f"Epoch {epoch+1}/{self.num_epochs} - Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, LR:{current_lr}")
 
                 self.save_checkpoint(model, optimizer, epoch, fold, train_loss, val_loss)
 

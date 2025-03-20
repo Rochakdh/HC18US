@@ -54,11 +54,10 @@ class UNet(nn.Module):
         self.final = nn.Conv2d(64, out_channels, kernel_size=1)
 
         self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2)
-
+    
     def forward(self, x):
-        """Resize input, process through U-Net, then resize output"""
-        orig_size = x.shape[-2:]  # Save original (H, W)
-        x = F.interpolate(x, size=(544, 800), mode='bilinear', align_corners=False)
+        # Save original dimensions
+        orig_size = x.shape[-2:]  # (H, W), e.g., (540, 800)
 
         # Encoder path
         x1 = self.down1(x)
@@ -71,29 +70,43 @@ class UNet(nn.Module):
         x5 = self.maxpool(x4)
         x5 = self.bottleneck(x5)
 
-        # Decoder path
+        # Decoder path with cropping
         x = self.up4(x5)
-        x = self.dropout4(x)  # Apply dropout before concatenation
-        x = torch.cat([x, x4], dim=1)
+        x = self.dropout4(x)
+        Hx, Wx = x.shape[2], x.shape[3]
+        x4_cropped = x4[:, :, :Hx, :Wx]  # Crop x4 to match x
+        x = torch.cat([x, x4_cropped], dim=1)
         x = self.conv4(x)
 
         x = self.up3(x)
         x = self.dropout3(x)
-        x = torch.cat([x, x3], dim=1)
+        Hx, Wx = x.shape[2], x.shape[3]
+        x3_cropped = x3[:, :, :Hx, :Wx]  # Crop x3 to match x
+        x = torch.cat([x, x3_cropped], dim=1)
         x = self.conv3(x)
 
         x = self.up2(x)
         x = self.dropout2(x)
-        x = torch.cat([x, x2], dim=1)
+        Hx, Wx = x.shape[2], x.shape[3]
+        x2_cropped = x2[:, :, :Hx, :Wx]  # Crop x2 to match x
+        x = torch.cat([x, x2_cropped], dim=1)
         x = self.conv2(x)
 
         x = self.up1(x)
         x = self.dropout1(x)
-        x = torch.cat([x, x1], dim=1)
+        Hx, Wx = x.shape[2], x.shape[3]
+        x1_cropped = x1[:, :, :Hx, :Wx]  # Crop x1 to match x
+        x = torch.cat([x, x1_cropped], dim=1)
         x = self.conv1(x)
 
         x = self.final(x)
-        x = F.interpolate(x, size=orig_size, mode='bilinear', align_corners=False)  # Resize back to original (540, 800)
+
+        # Pad output to match original size
+        current_H, current_W = x.shape[2], x.shape[3]
+        pad_H = orig_size[0] - current_H
+        pad_W = orig_size[1] - current_W
+        if pad_H > 0 or pad_W > 0:
+            x = F.pad(x, (0, pad_W, 0, pad_H), mode='replicate')
 
         return x
 

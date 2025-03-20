@@ -4,6 +4,7 @@ import pandas as pd
 import cv2
 import torch
 import numpy as np
+import torchvision.transforms.functional as TF
 
 def preprocess_mask(mask):
     """ Convert mask from 0-255 to binary 0 and 1 """
@@ -30,6 +31,21 @@ def fill_mask_holes(mask):
     filled_mask = cv2.bitwise_or(binary_mask, mask_filled_holes)
 
     return filled_mask
+
+
+def pad_image_and_mask(image_tensor, mask_tensor, target_width=540, target_height=800):
+    """Pads both image and mask tensors to target size while keeping them centered."""
+    _, h, w = image_tensor.shape  # Get current dimensions (C, H, W)
+    pad_left = (target_width - w) // 2
+    pad_right = target_width - w - pad_left
+    pad_top = (target_height - h) // 2
+    pad_bottom = target_height - h - pad_top
+
+    # Pad image (3 channels) and mask (1 channel) separately
+    image_padded = TF.pad(image_tensor, (pad_left, pad_top, pad_right, pad_bottom), fill=0)  # Pad with 0 (black)
+    mask_padded = TF.pad(mask_tensor, (pad_left, pad_top, pad_right, pad_bottom), fill=0)  # Pad with 0 (background)
+
+    return image_padded, mask_padded
 
 # class CustomUltrasoundDataset(Dataset):
 #     def __init__(self, annotation_file, image_dir, target_size=(540, 800), transform=None, augment=False):
@@ -121,11 +137,12 @@ class CustomUltrasoundDataset(Dataset):
         if self.augment and idx % 2 == 1 and self.transform:
             augmented = self.transform(image=image, mask=mask)
             image, mask = augmented["image"], augmented["mask"]
-
-        # Convert to tensor
-        image = torch.tensor(image, dtype=torch.float32).unsqueeze(0)
-        mask = torch.tensor(mask, dtype=torch.long)
-
+            image,mask = pad_image_and_mask(image,mask)
+            image = torch.tensor(image, dtype=torch.float32)
+            mask = torch.tensor(mask, dtype=torch.long)
+        else:
+            image = torch.tensor(image, dtype=torch.float32).unsqueeze(0)
+            mask = torch.tensor(mask, dtype=torch.long)
         return image, mask
 
 
@@ -136,23 +153,27 @@ if __name__ == "__main__":
 
     # Load dataset
     dataset = CustomUltrasoundDataset(
-        annotation_file="./src/training_set_pixel_size_and_HC.csv",
-        image_dir="./src/training_set"
+        annotation_file="/workspace/HC18US/src/training_set_pixel_size_and_HC.csv",
+        preprocessed_dir="/workspace/HC18US/src/generated_training_set/",
+        transform=None,
+        augment=False
     )
 
     # Get the image and mask at index 3
     image, mask = dataset[3]
+    print(image.shape)
+    print(mask.shape)
 
     # Convert tensors to NumPy arrays
-    image_np = (image.squeeze(0).numpy() * 255).astype(np.uint8)  # Scale back to 0-255
-    mask_np = mask.numpy().astype(np.uint8) * 255  # Ensure binary mask is in 0-255
+    # image_np = (image.squeeze(0).numpy() * 255).astype(np.uint8)  # Scale back to 0-255
+    # mask_np = mask.numpy().astype(np.uint8) * 255  # Ensure binary mask is in 0-255
 
-    # Define output directory
-    output_dir = "./dataset_test"
-    os.makedirs(output_dir, exist_ok=True)  # Create directory if it doesn't exist
+    # # Define output directory
+    # output_dir = "./dataset_test"
+    # os.makedirs(output_dir, exist_ok=True)  # Create directory if it doesn't exist
 
-    # Save image and mask using OpenCV
-    cv2.imwrite(os.path.join(output_dir, "image_3.png"), image_np)
-    cv2.imwrite(os.path.join(output_dir, "mask_3.png"), mask_np)
+    # # Save image and mask using OpenCV
+    # cv2.imwrite(os.path.join(output_dir, "image_3.png"), image_np)
+    # cv2.imwrite(os.path.join(output_dir, "mask_3.png"), mask_np)
 
-    print(f"Saved images to {output_dir}")
+    # print(f"Saved images to {output_dir}")

@@ -17,10 +17,12 @@ import time
 import numpy as np 
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
+from settings import set_deterministics
 
 class HC18US:
     def __init__(self, dataset, batch_size=BATCH_SIZE, num_epochs=NUM_EPOCHS, lr=LEARNING_RATE, num_folds=FOLD, 
                  device=DEVICE, checkpoint_dir=CHECKPOINT_DIR, log_dir=LOG_DIR):
+        set_deterministics()
         self.dataset = dataset
         self.batch_size = batch_size
         self.num_epochs = num_epochs
@@ -165,7 +167,7 @@ class HC18US:
 
             model = UNet(in_channels=1, out_channels=1).to(self.device)
             optimizer = optim.Adam(model.parameters(), lr=self.lr, weight_decay=1e-5)
-            scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3, verbose=True)
+            # scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10, verbose=True)
 
             start_epoch, train_loss, val_loss = self.load_checkpoint(model, optimizer, fold)
 
@@ -174,10 +176,10 @@ class HC18US:
             for epoch in range(start_epoch,self.num_epochs):
                 train_loss = self.train_on_epoch(model, train_loader, optimizer, epoch, fold)
                 val_loss = self.val_on_epoch(model, val_loader, epoch, fold)
-                scheduler.step(val_loss)
+                # scheduler.step(val_loss)
                 current_lr = optimizer.param_groups[0]['lr']
 
-                print(f"Epoch {epoch+1}/{self.num_epochs} - Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, LR:{current_lr}")
+                print(f"Epoch {epoch+1}/{self.num_epochs} - Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, LR ={current_lr}")
 
                 self.save_checkpoint(model, optimizer, epoch, fold, train_loss, val_loss)
 
@@ -259,12 +261,12 @@ class HC18US:
         # plt.show()
 
 transform = A.Compose([
+    A.RandomCrop(width=512, height=512), 
     A.HorizontalFlip(p=0.5),
     A.Rotate(limit=20, p=0.5),
     A.RandomBrightnessContrast(p=0.2),
     A.GaussianBlur(p=0.2),
-    A.Normalize(mean=[0.5], std=[0.5]),  # Normalize grayscale image
-    ToTensorV2(),  # Converts to PyTorch tensor
+    ToTensorV2()
 ])
 
 
@@ -278,8 +280,8 @@ transform = A.Compose([
 dataset = CustomUltrasoundDataset(
     annotation_file="/workspace/HC18US/src/training_set_pixel_size_and_HC.csv",
     preprocessed_dir="/workspace/HC18US/src/generated_training_set/",
-    transform=None,
-    augment=False
+    transform=transform,
+    augment=True
 )
 
 

@@ -16,7 +16,7 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 hc_df = pd.read_csv(ANNOTATION_FILE)
 
 # Processing Configurations
-TARGET_SIZE = (540, 800)  # Resize dimensions
+TARGET_SIZE = (800, 540)  # Resize dimensions since CV2 takes width then heigt as input
 
 def fill_mask_holes(mask):
     """Fill holes in the binary mask."""

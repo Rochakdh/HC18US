@@ -5,6 +5,7 @@ import cv2
 import torch
 import numpy as np
 import torchvision.transforms.functional as TF
+from torchvision import transforms
 
 def preprocess_mask(mask):
     """ Convert mask from 0-255 to binary 0 and 1 """
@@ -33,7 +34,7 @@ def fill_mask_holes(mask):
     return filled_mask
 
 
-def pad_image_and_mask(image_tensor, mask_tensor, target_width=540, target_height=800):
+def pad_image_and_mask(image_tensor, mask_tensor, target_width=800, target_height=540): #TODO: Only run genreating after data_set
     """Pads both image and mask tensors to target size while keeping them centered."""
     _, h, w = image_tensor.shape  # Get current dimensions (C, H, W)
     pad_left = (target_width - w) // 2
@@ -144,6 +145,69 @@ class CustomUltrasoundDataset(Dataset):
             image = torch.tensor(image, dtype=torch.float32).unsqueeze(0)
             mask = torch.tensor(mask, dtype=torch.long)
         return image, mask
+    
+    # def apply_transform(self, image, mask=None):
+
+    #     # Grayscale
+    #     image = transforms.functional.to_grayscale(image)
+    #     if self.train_mode:
+    #         mask = transforms.functional.to_grayscale(mask)
+
+    #     # Resize
+    #     resize = transforms.Resize(size=self.input_size, interpolation=Image.BILINEAR)
+    #     image = resize(image)
+    #     if self.train_mode:
+    #         mask = resize(mask)
+
+    #     if self.train_mode:
+    #         # Random affine
+    #         random_aff = transforms.RandomAffine(
+    #             degrees=0,
+    #             translate=(0.1, 0.1),
+    #             scale=(0.9, 1.1),
+    #             resample=3,
+    #             fillcolor=0,
+    #         )
+    #         ret = random_aff.get_params(
+    #             random_aff.degrees,
+    #             random_aff.translate,
+    #             random_aff.scale,
+    #             random_aff.shear,
+    #             image.size,
+    #         )
+    #         image = F.affine(
+    #             image,
+    #             *ret,
+    #             resample=random_aff.resample,
+    #             fillcolor=random_aff.fillcolor
+    #         )
+    #         mask = F.affine(
+    #             mask, *ret, resample=random_aff.resample, fillcolor=random_aff.fillcolor
+    #         )
+
+    #         # Random horizontal flipping
+    #         if random.random() > 0.5:
+    #             image = F.hflip(image)
+    #             mask = F.hflip(mask)
+
+    #         # Random vertical flipping
+    #         if random.random() > 0.5:
+    #             image = F.vflip(image)
+    #             mask = F.vflip(mask)
+
+    #     # Transform to tensor
+    #     image = F.to_tensor(image)
+    #     if self.train_mode:
+    #         mask = F.to_tensor(mask)
+
+    #     # Binarize mask
+    #     if self.train_mode:
+    #         mask = torch.where(
+    #             mask > 0.1, torch.tensor(1.0), torch.tensor(0.0)
+    #         )  # TODO: tune threshold
+
+    #         return image, mask
+    #     return image
 
 
 if __name__ == "__main__":

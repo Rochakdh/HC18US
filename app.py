@@ -8,7 +8,7 @@ from torch.optim import Adam
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import torch.nn as nn
 import torch.optim as optim
-from scripts.loss import dice_loss
+from scripts.loss import bce_dice_focal_loss
 import os
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
@@ -18,6 +18,19 @@ import numpy as np
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 from settings import set_deterministics
+from scripts.early_stop import EarlyStopping
+
+from pytorch_grad_cam import GradCAM
+from pytorch_grad_cam.utils.image import show_cam_on_image
+from PIL import Image
+import torch.nn.functional as F
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+
+from scripts.grad_cam_tgt import SemanticSegmentationTarget
+
+
 
 class HC18US:
     def __init__(self, dataset, batch_size=BATCH_SIZE, num_epochs=NUM_EPOCHS, lr=LEARNING_RATE, num_folds=FOLD, 
@@ -39,6 +52,8 @@ class HC18US:
 
     def save_checkpoint(self, model, optimizer, epoch, fold, train_loss, val_loss, best=False):
         """Saves model checkpoint including train/val loss."""
+        print("---------------------------------")
+        print(fold)
         checkpoint_path = os.path.join(self.checkpoint_dir, f"fold_{fold+1}_epoch_{epoch+1}.pt")
         if best:
             checkpoint_path = os.path.join(self.checkpoint_dir, f"best_model_fold_{fold+1}.pt")
@@ -92,7 +107,8 @@ class HC18US:
             image, mask = image.to(self.device), mask.to(self.device)
             optimizer.zero_grad()
             outputs = model(image)
-            loss = dice_loss(outputs, mask)
+            loss = bce_dice_focal_loss(outputs, mask)
+
             loss.backward()
             optimizer.step()
 
@@ -131,8 +147,8 @@ class HC18US:
                 batch_start = time.time()
 
                 image, mask = image.to(self.device), mask.to(self.device)
-                outputs = model(image)
-                loss = dice_loss(outputs, mask)
+                outputs = model(image) 
+                loss = bce_dice_focal_loss(outputs, mask)
 
                 batch_loss = loss.item()
                 running_loss += batch_loss
@@ -165,13 +181,17 @@ class HC18US:
             train_loader = DataLoader(train_subset, batch_size=self.batch_size, shuffle=True, drop_last=True)
             val_loader = DataLoader(val_subset, batch_size=self.batch_size, drop_last=True)
 
-            model = UNet(in_channels=1, out_channels=1).to(self.device)
+            model = UNet().to(self.device)
+
+            # model = UNet(n_channels=1, n_classes=1).to(self.device)
             optimizer = optim.Adam(model.parameters(), lr=self.lr, weight_decay=1e-5)
             # scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10, verbose=True)
 
             start_epoch, train_loss, val_loss = self.load_checkpoint(model, optimizer, fold)
 
             best_val_loss = float("inf")
+
+            early_stopper = EarlyStopping()
 
             for epoch in range(start_epoch,self.num_epochs):
                 train_loss = self.train_on_epoch(model, train_loader, optimizer, epoch, fold)
@@ -186,6 +206,12 @@ class HC18US:
                 if val_loss < best_val_loss:
                     best_val_loss = val_loss
                     self.save_checkpoint(model, optimizer, epoch, fold, train_loss, val_loss, best=True)
+                
+                early_stopper(val_loss)
+
+                if early_stopper.early_stop:
+                    print("Early stopping triggered.")
+                    break
 
             fold_results.append(best_val_loss)
 
@@ -213,52 +239,72 @@ class HC18US:
         plt.legend()
         plt.grid()
         plt.show()
-    
 
     def visualize_predictions(self, model, dataloader, epoch):
-        """ Visualizes model predictions on a few samples from the validation set. """
-        model.eval()  # Set model to evaluation mode
-        images, masks = next(iter(dataloader))  # Get a batch of validation images
-        images, masks = images.to(DEVICE), masks.to(DEVICE)
+        print(f"Visualizing predictions for epoch {epoch}...")
+        model.eval()
+
+        images, masks = next(iter(dataloader))
+        images, masks = images.to(self.device), masks.to(self.device)
 
         with torch.no_grad():
-            preds = model(images)  # Get model predictions
-            preds = torch.sigmoid(preds)  # Apply sigmoid if using BCE loss
-            preds = (preds > 0.5).float()  # Convert to binary mask
+            outputs = model(images)
+            preds = torch.sigmoid(outputs)
 
-        # Convert to numpy for visualization
-        images = images.cpu().numpy().squeeze()
-        masks = masks.cpu().numpy().squeeze()
-        preds = preds.cpu().numpy().squeeze()
+        images_np = images.cpu().numpy()
+        masks_np = masks.cpu().numpy()
+        preds_np = preds.cpu().numpy()
 
-        # Ensure the directory exists before saving
         output_dir = "./predicted_mask"
         os.makedirs(output_dir, exist_ok=True)
 
-        # Plot images, ground truth, and predictions
-        fig, axes = plt.subplots(len(images), 3, figsize=(10, 5 * len(images)))
-        if len(images) == 1:
-            axes = [axes]  # Ensure proper indexing if batch size is 1
+        batch_size = images.shape[0]
+        fig, axes = plt.subplots(batch_size, 4, figsize=(16, 4 * batch_size))
 
-        for i in range(len(images)):
-            axes[i][0].imshow(images[i], cmap='gray')
+        if batch_size == 1:
+            axes = [axes]  # Ensure it's iterable
+
+        target_layers = [model.down4.mpconv[1]]  # The second layer in down4 (i.e., double_conv)
+
+        for i in range(batch_size):
+            img_tensor = images[i].unsqueeze(0)  # (1, C, H, W)
+            img = images_np[i].transpose(1, 2, 0)  # (H, W, C)
+            img_normalized = (img - img.min()) / (img.max() - img.min() + 1e-8)
+
+            mask = masks_np[i][0] if masks_np[i].shape[0] == 1 else masks_np[i]
+            pred = preds_np[i][0] if preds_np[i].shape[0] == 1 else preds_np[i]
+
+            # Grad-CAM target
+            target = SemanticSegmentationTarget(mask)
+
+            # Run Grad-CAM
+            with GradCAM(model=model, target_layers=target_layers) as cam:
+                grayscale_cam = cam(input_tensor=img_tensor, targets=[target])[0]
+
+            cam_image = show_cam_on_image(img_normalized, grayscale_cam, use_rgb=True)
+
+            # Plotting
+            axes[i][0].imshow(img.squeeze(), cmap='gray')
             axes[i][0].set_title("Input Image")
 
-            axes[i][1].imshow(masks[i], cmap='gray')
+            axes[i][1].imshow(mask, cmap='gray')
             axes[i][1].set_title("Ground Truth Mask")
 
-            axes[i][2].imshow(preds[i], cmap='gray')
+            axes[i][2].imshow(pred, cmap='gray')
             axes[i][2].set_title(f"Predicted Mask (Epoch {epoch})")
+
+            axes[i][3].imshow(cam_image)
+            axes[i][3].set_title("Grad-CAM")
 
             for ax in axes[i]:
                 ax.axis("off")
 
-        # Save the figure
-        plt.savefig(os.path.join(output_dir, f'predictions_epoch_{epoch}.png'))
+        plt.tight_layout()
+        save_path = os.path.join(output_dir, f'predictions_with_cam_epoch_{epoch}.png')
+        plt.savefig(save_path)
         plt.close()
+        print(f"Saved visualization to {save_path}")
 
-        # plt.tight_layout()
-        # plt.show()
 
 transform = A.Compose([
     A.RandomCrop(width=512, height=512), 
@@ -280,8 +326,8 @@ transform = A.Compose([
 dataset = CustomUltrasoundDataset(
     annotation_file="/workspace/HC18US/src/training_set_pixel_size_and_HC.csv",
     preprocessed_dir="/workspace/HC18US/src/generated_training_set/",
-    transform=transform,
-    augment=True
+    transform=None,
+    augment=False
 )
 
 

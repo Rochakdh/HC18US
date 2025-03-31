@@ -326,8 +326,8 @@ transform = A.Compose([
 dataset = CustomUltrasoundDataset(
     annotation_file="/workspace/HC18US/src/training_set_pixel_size_and_HC.csv",
     preprocessed_dir="/workspace/HC18US/src/generated_training_set/",
-    transform=None,
-    augment=False
+    transform=transform,
+    augment=True
 )
 
 

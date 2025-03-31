@@ -14,3 +14,4 @@ ANNOTATION_FILE = "./src/training_set_pixel_size_and_HC.csv"
 IMG_DIR = "./src/training_set"
 CHECKPOINT_DIR = './models/checkpoint/'
 LOG_DIR = './logs/'
+TRAIN_OUTPUT_DIR = './predicted_mask'

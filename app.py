@@ -52,8 +52,6 @@ class HC18US:
 
     def save_checkpoint(self, model, optimizer, epoch, fold, train_loss, val_loss, best=False):
         """Saves model checkpoint including train/val loss."""
-        print("---------------------------------")
-        print(fold)
         checkpoint_path = os.path.join(self.checkpoint_dir, f"fold_{fold+1}_epoch_{epoch+1}.pt")
         if best:
             checkpoint_path = os.path.join(self.checkpoint_dir, f"best_model_fold_{fold+1}.pt")
@@ -183,7 +181,6 @@ class HC18US:
 
             model = UNet().to(self.device)
 
-            # model = UNet(n_channels=1, n_classes=1).to(self.device)
             optimizer = optim.Adam(model.parameters(), lr=self.lr, weight_decay=1e-5)
             # scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10, verbose=True)
 
@@ -255,7 +252,7 @@ class HC18US:
         masks_np = masks.cpu().numpy()
         preds_np = preds.cpu().numpy()
 
-        output_dir = "./predicted_mask"
+        output_dir = TRAIN_OUTPUT_DIR
         os.makedirs(output_dir, exist_ok=True)
 
         batch_size = images.shape[0]

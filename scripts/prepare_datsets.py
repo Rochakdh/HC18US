@@ -8,7 +8,7 @@ from tqdm import tqdm
 # Config
 ANNOTATION_FILE = "./src/training_set_pixel_size_and_HC.csv"
 IMAGE_DIR = "./src/training_set/"
-OUTPUT_BASE_DIR = "./src_dta/"
+OUTPUT_BASE_DIR = "./src/"
 TRAIN_DIR = os.path.join(OUTPUT_BASE_DIR, "generated_training_set")
 TEST_DIR = os.path.join(OUTPUT_BASE_DIR, "generated_test_set")
 

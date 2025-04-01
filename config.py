@@ -1,8 +1,10 @@
 import torch
 
-DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+torch.cuda.empty_cache()
+
+DEVICE = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 SEED =  42
-BATCH_SIZE = 8
+BATCH_SIZE = 1
 NUM_EPOCHS = 100
 LEARNING_RATE = 0.0001
 FOLD = 5

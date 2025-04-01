@@ -261,7 +261,9 @@ class HC18US:
         if batch_size == 1:
             axes = [axes]  # Ensure it's iterable
 
-        target_layers = [model.down4.mpconv[1]]  # The second layer in down4 (i.e., double_conv)
+        # target_layers = [model.down4.mpconv[1]]  # The second layer in down4 (i.e., double_conv)
+        target_layers = [model.z0z3z6z9z12_conv2.conv1]
+
 
         for i in range(batch_size):
             img_tensor = images[i].unsqueeze(0)  # (1, C, H, W)
@@ -321,7 +323,7 @@ transform = A.Compose([
 # )
 
 dataset = CustomUltrasoundDataset(
-    annotation_file="/workspace/HC18US/src/training_set_pixel_size_and_HC.csv",
+    annotation_file="/workspace/HC18US/src/train_generated.csv",
     preprocessed_dir="/workspace/HC18US/src/generated_training_set/",
     transform=transform,
     augment=True

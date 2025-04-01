@@ -210,23 +210,23 @@ class CustomUltrasoundDataset(Dataset):
     #     return image
 
 
-if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-    import cv2
-    import os
+# if __name__ == "__main__":
+#     import matplotlib.pyplot as plt
+#     import cv2
+#     import os
 
-    # Load dataset
-    dataset = CustomUltrasoundDataset(
-        annotation_file="/workspace/HC18US/src/training_set_pixel_size_and_HC.csv",
-        preprocessed_dir="/workspace/HC18US/src/generated_training_set/",
-        transform=None,
-        augment=False
-    )
+#     # Load dataset
+#     dataset = CustomUltrasoundDataset(
+#         annotation_file="/workspace/HC18US/src/training_set_pixel_size_and_HC.csv",
+#         preprocessed_dir="/workspace/HC18US/src/generated_training_set/",
+#         transform=None,
+#         augment=False
+#     )
 
-    # Get the image and mask at index 3
-    image, mask = dataset[3]
-    print(image.shape)
-    print(mask.shape)
+#     # Get the image and mask at index 3
+#     image, mask = dataset[3]
+#     print(image.shape)
+#     print(mask.shape)
 
     # Convert tensors to NumPy arrays
     # image_np = (image.squeeze(0).numpy() * 255).astype(np.uint8)  # Scale back to 0-255

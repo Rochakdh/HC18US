@@ -25,15 +25,15 @@ def dice_score(pred, gt):
     return 2. * intersection / (pred.sum() + gt.sum() + 1e-6)
 
 # -------- Load CSV --------
-df = pd.read_csv('./src/test_set_pixe_size_new.csv')
+df = pd.read_csv('./src/test_generated.csv')
 
 # -------- Paths --------
 data_dir = 'src/generated_test_set/'
-folds = [1]
+folds = [1,2,3,4]
 
 # -------- Loop over folds --------
 for fold in folds:
-    print(f"\n Evaluating Fold {fold}...\n")
+    print(f"\n Evaluating Fold {fold}...")
 
     # Load model
     model = UNet().to(DEVICE)

@@ -174,8 +174,11 @@ cython_debug/
 .pypirc
 logs
 predicted_mask
+predicted_mask_
 models/checkpoint
+models/checkpoint_4_1
+models/checkpoint_
 venv_cluster
 visuals
-src/W
+src_
 models/checkpoint_3_31_f

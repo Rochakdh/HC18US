@@ -117,7 +117,7 @@ def focal_loss(pred, target, alpha=0.8, gamma=2.0):
     return focal.mean()
 
 
-def bce_dice_focal_loss(pred, target, bce_weight=0.4, dice_weight=0.5, focal_weight=0.1):
+def bce_dice_focal_loss(pred, target, bce_weight=0.2, dice_weight=0.6, focal_weight=0.2):
     """
     Combined loss: BCEWithLogits + Dice + Focal
     """

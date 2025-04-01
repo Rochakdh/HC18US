@@ -29,7 +29,7 @@ df = pd.read_csv('./src/test_set_pixe_size_new.csv')
 
 # -------- Paths --------
 data_dir = 'src/generated_test_set/'
-folds = [1,2,3]
+folds = [1]
 
 # -------- Loop over folds --------
 for fold in folds:
@@ -61,7 +61,7 @@ for fold in folds:
         mask_path = os.path.join(data_dir, f"{fname}_Annotation.npy")
 
         if not os.path.exists(img_path) or not os.path.exists(mask_path):
-            print(f"⚠️ Missing file: {fname}")
+            print(f" Missing file: {fname}")
             continue
 
         # Load input image and GT mask
@@ -100,7 +100,7 @@ for fold in folds:
         gt_hcs.append(gt_hc)
         dice_scores.append(dice)
 
-        print(f"{fname} | Dice: {dice:.4f} | HC_pred: {hc_mm:.2f} mm | HC_gt: {gt_hc:.2f} mm")
+        # print(f"{fname} | Dice: {dice:.4f} | HC_pred: {hc_mm:.2f} mm | HC_gt: {gt_hc:.2f} mm")
 
         # -------- Visualization --------
         norm_image = (image - image.min()) / (image.max() - image.min() + 1e-8)

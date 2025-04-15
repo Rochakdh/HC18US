@@ -89,7 +89,7 @@ Train Set needs to have both ultraound Image and Ground Truth(with _Annotation).
 
 ### Configuration
 
-Edit `settings.py` to customize training parameters:
+Edit `config.py` to customize training parameters:
 ```python
 DEVICE = "cuda:0"
 BATCH_SIZE = 4

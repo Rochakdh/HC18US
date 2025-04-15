@@ -25,11 +25,11 @@ def dice_score(pred, gt):
     return 2. * intersection / (pred.sum() + gt.sum() + 1e-6)
 
 # -------- Load CSV --------
-df = pd.read_csv('./src/test_generated.csv')
+df = pd.read_csv(TEST_ANNONATION_FILE)
 
 # -------- Paths --------
-data_dir = 'src/generated_test_set/'
-folds = [1]
+data_dir = TEST_PREPROCESSED_DIR
+folds = SET_TEST_FOLDS
 
 # -------- Loop over folds --------
 for fold in folds:

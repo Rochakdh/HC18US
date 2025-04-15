@@ -175,5 +175,6 @@ cython_debug/
 logs
 predicted_mask
 models/checkpoint
+models/checkpoint_
 venv_cluster
 visuals

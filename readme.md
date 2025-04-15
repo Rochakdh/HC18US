@@ -130,7 +130,20 @@ python evaluate.py
 - Explore `animation.gif` for intermediate learning of modeks by execting cell on`notebooks/exploratory_data_analysis.ipynb` for insights
 - Intremediate results during model learning will be stored on `predicted_mask` folder in root folder.
 
-```
+
+## Results
+
+Below are visual results showcasing the model's performance in segmenting fetal head circumference from ultrasound images.
+
+### Learning Example at Fold 5, 66th Epoch
+![Learning example at fold 5, 66th epoch](predicted_mask/fold_5_epoch_66.png)
+This image shows the model's segmentation output on a sample from fold 5 at the 66th epoch during training.
+
+### Test Evaluation Visuals
+![Test evaluation](visuals/fold_1/281_HC_result.png)
+Test evaluation image 1 from fold 5, demonstrating the model's segmentation and ellipse fitting on a test set sample.
+
+
 
 ## Citation
 

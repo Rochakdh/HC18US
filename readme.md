@@ -31,13 +31,13 @@ The pipeline includes data preprocessing, model training with k-fold cross-valid
 │   └── training_set_pixel_size_and_HC.csv  # Pixel size and HC metadata
 ├── visuals/                        # Fold-wise visual outputs
 │   ├── fold_1/ to fold_5/          # Visualizations per fold during evalutions
-├── app.py                          # Inference application entry point
+├── trainer.py                      # Main Starting Point For Training
 ├── config.py                       # Central configuration
 ├── evaluate.py                     # Evaluation script
 ├── learnings.txt                   # Notes and observations
 ├── README.md                       # This file
 ├── requirements.txt                # Python dependencies
-└── settings.py                     # Hyperparameters and device settings
+└── settings.py                     # Setting Deterministics And Devices
 ```
 
 ## Getting Started
@@ -52,8 +52,8 @@ The pipeline includes data preprocessing, model training with k-fold cross-valid
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/fetal-hc-estimation.git
-   cd fetal-hc-estimation
+   git clone https://github.com/Rochakdh/HC18US.git
+   cd HC18US
    ```
 
 2. Create and activate a virtual environment:
@@ -104,7 +104,7 @@ DROPOUT = 0.3
 
 Train the model with:
 ```bash
-python train.py
+python trainer.py
 ```
 
 **Features**:

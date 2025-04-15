@@ -136,7 +136,7 @@ python evaluate.py
 Below are visual results showcasing the model's performance in segmenting fetal head circumference from ultrasound images.
 
 ### Learning Example at Fold 5, 66th Epoch
-![Learning example at fold 5, 66th epoch](predicted_mask/fold_5_epoch_66.png)
+![Learning example at fold 5, 66th epoch](predictions_with_cam_epoch_66.png)
 This image shows the model's segmentation output on a sample from fold 5 at the 66th epoch during training.
 
 ### Test Evaluation Visuals
@@ -164,7 +164,3 @@ Feel free to open issues or submit pull requests for suggestions, bug fixes, or 
 ## Contact
 
 For questions, please open an issue on GitHub.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

@@ -6,3 +6,5 @@ matplotlib==3.10.0
 seaborn==0.13.2
 scikit-learn==1.6.0
 opencv-python
+grad-cam==1.5.4
+albumentations==2.0.4

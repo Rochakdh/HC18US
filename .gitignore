@@ -178,3 +178,4 @@ models/checkpoint
 models/checkpoint_
 venv_cluster
 visuals
+.vscode

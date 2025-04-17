@@ -2,7 +2,6 @@ import torch
 
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-# DEVICE = "cpu"
 SEED =  42
 BATCH_SIZE = 4
 NUM_EPOCHS = 100
@@ -22,3 +21,5 @@ LOG_DIR = './logs/'
 TRAIN_OUTPUT_DIR = './predicted_mask'
 NUM_FOLD = 5
 SET_TEST_FOLDS = [1,2,3,4,5] #test for all the folds or individual folds 
+EVAL_VISUALIZATION = False
+AGUMENTATION = True

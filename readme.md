@@ -34,7 +34,6 @@ The pipeline includes data preprocessing, model training with k-fold cross-valid
 ├── trainer.py                      # Main Starting Point For Training
 ├── config.py                       # Central configuration
 ├── evaluate.py                     # Evaluation script
-├── learnings.txt                   # Notes and observations
 ├── README.md                       # This file
 ├── requirements.txt                # Python dependencies
 └── settings.py                     # Setting Deterministics And Devices
@@ -121,8 +120,8 @@ python evaluate.py
 ```
 
 **Outputs**:
-- Predictions saved in `predicted_mask/`
-- Metrics: Dice coefficient, IoU
+- Predictions saved in `models/checkpoint/`
+- Metrics: Dice coefficient, MAE
 
 ### Visualization
 
@@ -151,7 +150,7 @@ If you use this codebase, please cite:
 ```
 @misc{fetal_hc_estimation_2025,
   title = {Fetal Head Circumference Estimation from Ultrasound Images},
-  author = {Rocha Dhakal},
+  author = {Rochak Dhakal},
   year = {2025},
   url = {https://github.com/Rochakdh/HC18US}
 }
